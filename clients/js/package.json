@@ -1,6 +1,6 @@
 {
   "name": "@midevils/soulburn",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "JavaScript client for the Soulburn program",
   "sideEffects": false,
   "module": "./dist/src/index.mjs",
