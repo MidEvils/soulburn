@@ -22,12 +22,17 @@ pub(crate) fn mint_tokens<'a>(
         return Err(SoulburnError::AccountMismatch.into());
     }
 
-    let burn_event_account = BurnEvent::load(burn_event)?;
+    let mut burn_event_account = BurnEvent::load(burn_event)?;
     let mint_account = SplMint::unpack(&mint.try_borrow_data()?)?;
 
     match burn_event_account.max_tokens {
-        Some(tokens) => {
-            if mint_account.supply.checked_add(amount).unwrap() > tokens {
+        Some(max_tokens) => {
+            if burn_event_account
+                .tokens_minted
+                .checked_add(amount)
+                .unwrap()
+                > max_tokens
+            {
                 return Err(SoulburnError::MaxTokensMinted.into());
             }
         }
@@ -52,5 +57,8 @@ pub(crate) fn mint_tokens<'a>(
         &ix,
         &[mint.clone(), ata.clone(), owner.clone(), burner.clone()],
         &[seeds],
-    )
+    )?;
+
+    burn_event_account.tokens_minted += amount;
+    burn_event_account.save(burn_event)
 }

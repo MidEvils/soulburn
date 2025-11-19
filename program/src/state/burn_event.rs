@@ -17,10 +17,11 @@ pub struct BurnEvent {
     pub burns_required: u8,
     pub tokens_per_event_burn: u64,
     pub max_tokens: Option<u64>,
+    pub tokens_minted: u64,
 }
 
 impl BurnEvent {
-    pub const LEN: usize = 1 + 32 + 32 + 1 + (1 + 8) + 1 + 8 + (1 + 8);
+    pub const LEN: usize = 1 + 32 + 32 + 1 + (1 + 8) + 1 + 8 + (1 + 8) + 8;
 
     pub fn load(account: &AccountInfo) -> Result<Self, ProgramError> {
         let mut bytes: &[u8] = &(*account.data).borrow();

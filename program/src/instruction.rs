@@ -43,7 +43,7 @@ pub enum SoulburnInstruction {
     /// Burn asset(s) as part of a burn event.
     /// Additional accounts to be provided in pairs of [Asset, SoulboundAsset]
     #[account(0, name="burner", desc = "The PDA of the burner account (seeds: ['soulburn', 'burner', collection])")]
-    #[account(1, name="burn_event", desc = "The burn event account")]
+    #[account(1, writable, name="burn_event", desc = "The burn event account")]
     #[account(2, writable, name="collection", desc = "The collection of the asset to be burned")]
     #[account(3, writable, name="soulbound_collection", desc = "The collection of the soulbound asset")]
     #[account(4, writable, signer, name="owner", desc = "The owner of the asset")]
@@ -57,7 +57,7 @@ pub enum SoulburnInstruction {
 
     /// Amin instruction to manually mint a burn event token
     #[account(0, name="burner", desc = "The PDA of the burner account (seeds: ['soulburn', 'burner', collection])")]
-    #[account(1, name="burn_event", desc = "The burn event account")]
+    #[account(1, writable, name="burn_event", desc = "The burn event account")]
     #[account(2, writable, name="mint", desc = "The mint of the event (seeds: ['soulburn', 'mint', burn_event])")]
     #[account(3, signer, name="authority", desc = "The authority of the burner")]
     #[account(4, writable, name="ata", desc = "The ata to receive the reward mint")]

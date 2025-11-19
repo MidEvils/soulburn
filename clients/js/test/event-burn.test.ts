@@ -6,6 +6,7 @@ import {
   getEventBurnInstruction,
   SOULBURN_ERROR__EVENT_ENDED,
   SOULBURN_ERROR__EVENT_INACTIVE,
+  SOULBURN_ERROR__EXPECTED_MPL_CORE_ASSET,
   SOULBURN_ERROR__INVALID_REMAINING_ACCOUNTS,
   SOULBURN_ERROR__MAX_TOKENS_MINTED,
   SOULBURN_PROGRAM_ADDRESS,
@@ -28,6 +29,7 @@ import {
 import {
   Account,
   appendTransactionMessageInstruction,
+  appendTransactionMessageInstructions,
   fetchEncodedAccounts,
   isProgramError,
   isSolanaError,
@@ -39,6 +41,7 @@ import {
   fetchMint,
   fetchToken,
   findAssociatedTokenPda,
+  getBurnInstruction,
   TOKEN_PROGRAM_ADDRESS,
 } from '@solana-program/token';
 
@@ -149,6 +152,105 @@ test('can soulburn for an event', async (t) => {
 
   const mintAcc = await fetchMint(client.rpc, mint);
   t.assert(mintAcc.data.supply === 1n);
+});
+
+test('cannot soulburn the same assets twice', async (t) => {
+  t.timeout(30000);
+  const client = createDefaultSolanaClient();
+  const authority = await generateKeyPairSignerWithSol(client);
+  const collection = await createCoreCollection(client, authority);
+
+  const burner = await createBurner(client, authority, collection);
+  const burnEvent = await createBurnEvent(
+    client,
+    authority,
+    burner,
+    2,
+    1n,
+    300n
+  );
+
+  await activateBurnEvent(client, burnEvent, burner, authority);
+
+  const owner = await generateKeyPairSignerWithSol(client);
+
+  const asset = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    'Test asset 1',
+    'https://example.com'
+  );
+
+  const asset2 = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    'Test asset 2',
+    'https://example.com'
+  );
+
+  const [soulboundCollection] = await findCollectionPda({
+    collection,
+  });
+
+  const [soulboundAsset] = await findAssetPda({
+    collection,
+    asset,
+  });
+
+  const [soulboundAsset2] = await findAssetPda({
+    collection,
+    asset: asset2,
+  });
+
+  const [mint] = await findMintPda({
+    burnEvent,
+  });
+
+  const [ata] = await findAssociatedTokenPda({
+    mint,
+    owner: owner.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  // When we create a new burner account.
+  const soulburnIx = getEventBurnInstruction({
+    burner,
+    burnEvent,
+    collection,
+    soulboundCollection,
+    owner,
+    coreProgram: MPL_CORE_PROGRAM_PROGRAM_ADDRESS,
+    assets: [asset, soulboundAsset, asset2, soulboundAsset2],
+    mint,
+    ata,
+    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+  });
+  const transactionMessage = pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionMessageInstructions([soulburnIx, soulburnIx], tx)
+  );
+
+  const promise = signAndSendTransaction(client, transactionMessage);
+  const error = await t.throwsAsync(promise);
+
+  t.true(
+    isSolanaError(
+      error,
+      SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+    )
+  );
+  t.true(
+    isProgramError(
+      error.cause,
+      transactionMessage,
+      SOULBURN_PROGRAM_ADDRESS,
+      SOULBURN_ERROR__EXPECTED_MPL_CORE_ASSET
+    )
+  );
 });
 
 test('cannot soulburn 1 or 3 assets if expects 2', async (t) => {
@@ -382,6 +484,131 @@ test('cannot burn if max mints is reached', async (t) => {
   await pipe(
     await createDefaultTransaction(client, authority),
     (tx) => appendTransactionMessageInstruction(soulburnIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  const transactionMessage = pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) =>
+      appendTransactionMessageInstruction(
+        getEventBurnInstruction({
+          burner,
+          burnEvent,
+          collection,
+          soulboundCollection,
+          owner,
+          coreProgram: MPL_CORE_PROGRAM_PROGRAM_ADDRESS,
+          assets: [asset2, soulboundAsset2],
+          mint,
+          ata,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+        }),
+        tx
+      )
+  );
+
+  const promise = signAndSendTransaction(client, transactionMessage);
+  const error = await t.throwsAsync(promise);
+
+  t.true(
+    isSolanaError(
+      error,
+      SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+    )
+  );
+  t.true(
+    isProgramError(
+      error.cause,
+      transactionMessage,
+      SOULBURN_PROGRAM_ADDRESS,
+      SOULBURN_ERROR__MAX_TOKENS_MINTED
+    )
+  );
+});
+
+test('cannot burn if max mints is reached even if they are burned', async (t) => {
+  t.timeout(30000);
+  const client = createDefaultSolanaClient();
+  const authority = await generateKeyPairSignerWithSol(client);
+  const collection = await createCoreCollection(client, authority);
+
+  const burner = await createBurner(client, authority, collection);
+  const burnEvent = await createBurnEvent(client, authority, burner, 1, 1n, 1n);
+
+  await activateBurnEvent(client, burnEvent, burner, authority);
+
+  const owner = await generateKeyPairSignerWithSol(client);
+
+  const asset = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    'Test asset 1',
+    'https://example.com'
+  );
+
+  const asset2 = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    'Test asset 2',
+    'https://example.com'
+  );
+
+  const [soulboundCollection] = await findCollectionPda({
+    collection,
+  });
+
+  const [soulboundAsset] = await findAssetPda({
+    collection,
+    asset,
+  });
+
+  const [soulboundAsset2] = await findAssetPda({
+    collection,
+    asset: asset2,
+  });
+
+  const [mint] = await findMintPda({
+    burnEvent,
+  });
+
+  const [ata] = await findAssociatedTokenPda({
+    mint,
+    owner: owner.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  // When we create a new burner account.
+  const soulburnIx = getEventBurnInstruction({
+    burner,
+    burnEvent,
+    collection,
+    soulboundCollection,
+    owner,
+    coreProgram: MPL_CORE_PROGRAM_PROGRAM_ADDRESS,
+    assets: [asset, soulboundAsset],
+    mint,
+    ata,
+    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+  });
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          soulburnIx,
+          getBurnInstruction({
+            mint,
+            account: ata,
+            amount: 1,
+            authority: owner,
+          }),
+        ],
+        tx
+      ),
     (tx) => signAndSendTransaction(client, tx)
   );
 

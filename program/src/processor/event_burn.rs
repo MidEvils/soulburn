@@ -48,8 +48,8 @@ pub(crate) fn event_burn<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
         return Err(SoulburnError::InvalidRemainingAccounts.into());
     }
 
-    ctx.remaining_accounts.chunks(2).for_each(|chunk| {
-        let _ = soulburn(
+    for chunk in ctx.remaining_accounts.chunks(2) {
+        soulburn(
             &chunk[0],
             ctx.accounts.collection,
             &chunk[1],
@@ -58,8 +58,8 @@ pub(crate) fn event_burn<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
             ctx.accounts.owner,
             ctx.accounts.core_program,
             ctx.accounts.system_program,
-        );
-    });
+        )?
+    }
 
     create_ata(
         ctx.accounts.owner,

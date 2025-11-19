@@ -64,7 +64,7 @@ export type EventBurnInstruction<
         ? ReadonlyAccount<TAccountBurner>
         : TAccountBurner,
       TAccountBurnEvent extends string
-        ? ReadonlyAccount<TAccountBurnEvent>
+        ? WritableAccount<TAccountBurnEvent>
         : TAccountBurnEvent,
       TAccountCollection extends string
         ? WritableAccount<TAccountCollection>
@@ -207,7 +207,7 @@ export function getEventBurnInstruction<
   // Original accounts.
   const originalAccounts = {
     burner: { value: input.burner ?? null, isWritable: false },
-    burnEvent: { value: input.burnEvent ?? null, isWritable: false },
+    burnEvent: { value: input.burnEvent ?? null, isWritable: true },
     collection: { value: input.collection ?? null, isWritable: true },
     soulboundCollection: {
       value: input.soulboundCollection ?? null,

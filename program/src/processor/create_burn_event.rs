@@ -55,6 +55,7 @@ pub(crate) fn create_burn_event<'a>(
         active: false,
         burner: *ctx.accounts.burner.key,
         burns_required,
+        tokens_minted: 0,
     };
 
     create_account(

@@ -63,7 +63,7 @@ export type AdminMintInstruction<
         ? ReadonlyAccount<TAccountBurner>
         : TAccountBurner,
       TAccountBurnEvent extends string
-        ? ReadonlyAccount<TAccountBurnEvent>
+        ? WritableAccount<TAccountBurnEvent>
         : TAccountBurnEvent,
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
@@ -197,7 +197,7 @@ export function getAdminMintInstruction<
   // Original accounts.
   const originalAccounts = {
     burner: { value: input.burner ?? null, isWritable: false },
-    burnEvent: { value: input.burnEvent ?? null, isWritable: false },
+    burnEvent: { value: input.burnEvent ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     ata: { value: input.ata ?? null, isWritable: true },

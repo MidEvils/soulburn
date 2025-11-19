@@ -58,6 +58,7 @@ export type BurnEvent = {
   burnsRequired: number;
   tokensPerEventBurn: bigint;
   maxTokens: Option<bigint>;
+  tokensMinted: bigint;
 };
 
 export type BurnEventArgs = {
@@ -68,6 +69,7 @@ export type BurnEventArgs = {
   burnsRequired: number;
   tokensPerEventBurn: number | bigint;
   maxTokens: OptionOrNullable<number | bigint>;
+  tokensMinted: number | bigint;
 };
 
 export function getBurnEventEncoder(): Encoder<BurnEventArgs> {
@@ -81,6 +83,7 @@ export function getBurnEventEncoder(): Encoder<BurnEventArgs> {
       ['burnsRequired', getU8Encoder()],
       ['tokensPerEventBurn', getU64Encoder()],
       ['maxTokens', getOptionEncoder(getU64Encoder())],
+      ['tokensMinted', getU64Encoder()],
     ]),
     (value) => ({ ...value, key: BURN_EVENT_KEY })
   );
@@ -96,6 +99,7 @@ export function getBurnEventDecoder(): Decoder<BurnEvent> {
     ['burnsRequired', getU8Decoder()],
     ['tokensPerEventBurn', getU64Decoder()],
     ['maxTokens', getOptionDecoder(getU64Decoder())],
+    ['tokensMinted', getU64Decoder()],
   ]);
 }
 

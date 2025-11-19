@@ -282,7 +282,7 @@
         },
         {
           "name": "burnEvent",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "The burn event account"
@@ -380,7 +380,7 @@
         },
         {
           "name": "burnEvent",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "The burn event account"
@@ -512,6 +512,10 @@
             "type": {
               "option": "u64"
             }
+          },
+          {
+            "name": "tokensMinted",
+            "type": "u64"
           }
         ]
       }
