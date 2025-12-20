@@ -182,6 +182,7 @@
           "name": "mint",
           "isMut": true,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "The mint of the spl-token (seeds: ['soulburn', 'mint', burn_event])"
           ]
@@ -209,17 +210,15 @@
           "type": "u8"
         },
         {
-          "name": "tokensPerEventBurn",
-          "type": "u64"
-        },
-        {
-          "name": "endsAt",
+          "name": "endType",
           "type": {
-            "option": "i64"
+            "option": {
+              "defined": "EndType"
+            }
           }
         },
         {
-          "name": "maxTokens",
+          "name": "tokensPerBurn",
           "type": {
             "option": "u64"
           }
@@ -316,6 +315,7 @@
           "name": "mint",
           "isMut": true,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "The mint of the event (seeds: ['soulburn', 'mint', burn_event])"
           ]
@@ -324,6 +324,7 @@
           "name": "ata",
           "isMut": true,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "The ata to receive the reward mint"
           ]
@@ -356,6 +357,7 @@
           "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "The associated token program"
           ]
@@ -446,7 +448,7 @@
       "args": [
         {
           "name": "amount",
-          "type": "u64"
+          "type": "u16"
         }
       ],
       "discriminant": {
@@ -486,36 +488,34 @@
             "type": "publicKey"
           },
           {
-            "name": "mint",
-            "type": "publicKey"
-          },
-          {
             "name": "active",
             "type": "bool"
-          },
-          {
-            "name": "endsAt",
-            "type": {
-              "option": "i64"
-            }
           },
           {
             "name": "burnsRequired",
             "type": "u8"
           },
           {
-            "name": "tokensPerEventBurn",
-            "type": "u64"
-          },
-          {
-            "name": "maxTokens",
+            "name": "eventType",
             "type": {
-              "option": "u64"
+              "defined": "EventType"
             }
           },
           {
-            "name": "tokensMinted",
-            "type": "u64"
+            "name": "endType",
+            "type": {
+              "option": {
+                "defined": "EndType"
+              }
+            }
+          },
+          {
+            "name": "burnsCompleted",
+            "type": "u16"
+          },
+          {
+            "name": "completed",
+            "type": "bool"
           }
         ]
       }
@@ -594,6 +594,56 @@
           },
           {
             "name": "Mint"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Token",
+            "fields": [
+              {
+                "name": "tokens_per_burn",
+                "type": "u64"
+              },
+              {
+                "name": "mint",
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "Noop"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EndType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "MaxBurns",
+            "fields": [
+              {
+                "name": "max_burns",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "Timestamp",
+            "fields": [
+              {
+                "name": "ends_at",
+                "type": "i64"
+              }
+            ]
           }
         ]
       }
@@ -687,8 +737,8 @@
     },
     {
       "code": 17,
-      "name": "MaxTokensMinted",
-      "msg": "This event has reached its capacity"
+      "name": "BurnEventCompleted",
+      "msg": "This event has completed"
     },
     {
       "code": 18,
@@ -699,6 +749,16 @@
       "code": 19,
       "name": "EventInactive",
       "msg": "This event is inactive"
+    },
+    {
+      "code": 20,
+      "name": "InvalidMaxBurns",
+      "msg": "Max burns must be greater than 0"
+    },
+    {
+      "code": 21,
+      "name": "InvalidParams",
+      "msg": "Max burns must be greater than 0"
     }
   ],
   "metadata": {

@@ -62,14 +62,20 @@ pub enum SoulburnError {
     )]
     InvalidRemainingAccounts,
     /// 17 - Max tokens minted
-    #[error("This event has reached its capacity")]
-    MaxTokensMinted,
+    #[error("This event has completed")]
+    BurnEventCompleted,
     /// 18 - Event ended
     #[error("This event has ended")]
     EventEnded,
     /// 19 - Event inactive
     #[error("This event is inactive")]
     EventInactive,
+    /// 20 - Invalid max burns
+    #[error("Max burns must be greater than 0")]
+    InvalidMaxBurns,
+    /// 21 - Invalid max burns
+    #[error("Max burns must be greater than 0")]
+    InvalidParams,
 }
 
 impl PrintProgramError for SoulburnError {

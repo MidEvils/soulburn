@@ -34,18 +34,11 @@ pub fn process_instruction<'a>(
         }
         SoulburnInstruction::CreateBurnEvent {
             burns_required,
-            tokens_per_event_burn,
-            ends_at,
-            max_tokens,
+            end_type,
+            tokens_per_burn,
         } => {
             msg!("Instruction: CreateBurnEvent");
-            create_burn_event(
-                accounts,
-                burns_required,
-                tokens_per_event_burn,
-                ends_at,
-                max_tokens,
-            )
+            create_burn_event(accounts, burns_required, end_type, tokens_per_burn)
         }
         SoulburnInstruction::EventBurn => {
             msg!("Instruction: EventBurn");

@@ -48,15 +48,20 @@ export const SOULBURN_ERROR__INVALID_ASSET_OWNER = 0xe; // 14
 export const SOULBURN_ERROR__INVALID_END_TIME = 0xf; // 15
 /** InvalidRemainingAccounts: Remaning accounts must be in pairs of 2 and equal to the number of assets in the event */
 export const SOULBURN_ERROR__INVALID_REMAINING_ACCOUNTS = 0x10; // 16
-/** MaxTokensMinted: This event has reached its capacity */
-export const SOULBURN_ERROR__MAX_TOKENS_MINTED = 0x11; // 17
+/** BurnEventCompleted: This event has completed */
+export const SOULBURN_ERROR__BURN_EVENT_COMPLETED = 0x11; // 17
 /** EventEnded: This event has ended */
 export const SOULBURN_ERROR__EVENT_ENDED = 0x12; // 18
 /** EventInactive: This event is inactive */
 export const SOULBURN_ERROR__EVENT_INACTIVE = 0x13; // 19
+/** InvalidMaxBurns: Max burns must be greater than 0 */
+export const SOULBURN_ERROR__INVALID_MAX_BURNS = 0x14; // 20
+/** InvalidParams: Max burns must be greater than 0 */
+export const SOULBURN_ERROR__INVALID_PARAMS = 0x15; // 21
 
 export type SoulburnError =
   | typeof SOULBURN_ERROR__ACCOUNT_MISMATCH
+  | typeof SOULBURN_ERROR__BURN_EVENT_COMPLETED
   | typeof SOULBURN_ERROR__DESERIALIZATION_ERROR
   | typeof SOULBURN_ERROR__EVENT_ENDED
   | typeof SOULBURN_ERROR__EVENT_INACTIVE
@@ -70,10 +75,11 @@ export type SoulburnError =
   | typeof SOULBURN_ERROR__INVALID_ASSET_OWNER
   | typeof SOULBURN_ERROR__INVALID_COLLECTION_FOR_ASSET
   | typeof SOULBURN_ERROR__INVALID_END_TIME
+  | typeof SOULBURN_ERROR__INVALID_MAX_BURNS
+  | typeof SOULBURN_ERROR__INVALID_PARAMS
   | typeof SOULBURN_ERROR__INVALID_PDA
   | typeof SOULBURN_ERROR__INVALID_PROGRAM_OWNER
   | typeof SOULBURN_ERROR__INVALID_REMAINING_ACCOUNTS
-  | typeof SOULBURN_ERROR__MAX_TOKENS_MINTED
   | typeof SOULBURN_ERROR__NUMERICAL_OVERFLOW
   | typeof SOULBURN_ERROR__SERIALIZATION_ERROR;
 
@@ -81,6 +87,7 @@ let soulburnErrorMessages: Record<SoulburnError, string> | undefined;
 if (process.env.NODE_ENV !== 'production') {
   soulburnErrorMessages = {
     [SOULBURN_ERROR__ACCOUNT_MISMATCH]: `Account mismatch`,
+    [SOULBURN_ERROR__BURN_EVENT_COMPLETED]: `This event has completed`,
     [SOULBURN_ERROR__DESERIALIZATION_ERROR]: `Error deserializing an account`,
     [SOULBURN_ERROR__EVENT_ENDED]: `This event has ended`,
     [SOULBURN_ERROR__EVENT_INACTIVE]: `This event is inactive`,
@@ -94,10 +101,11 @@ if (process.env.NODE_ENV !== 'production') {
     [SOULBURN_ERROR__INVALID_ASSET_OWNER]: `Invalid owner for asset`,
     [SOULBURN_ERROR__INVALID_COLLECTION_FOR_ASSET]: `Invalid collection for asset`,
     [SOULBURN_ERROR__INVALID_END_TIME]: `Invalid end time, must be at least 1hr`,
+    [SOULBURN_ERROR__INVALID_MAX_BURNS]: `Max burns must be greater than 0`,
+    [SOULBURN_ERROR__INVALID_PARAMS]: `Max burns must be greater than 0`,
     [SOULBURN_ERROR__INVALID_PDA]: `Invalid PDA derivation`,
     [SOULBURN_ERROR__INVALID_PROGRAM_OWNER]: `Invalid program owner. This likely mean the provided account does not exist`,
     [SOULBURN_ERROR__INVALID_REMAINING_ACCOUNTS]: `Remaning accounts must be in pairs of 2 and equal to the number of assets in the event`,
-    [SOULBURN_ERROR__MAX_TOKENS_MINTED]: `This event has reached its capacity`,
     [SOULBURN_ERROR__NUMERICAL_OVERFLOW]: `Numerical overflow`,
     [SOULBURN_ERROR__SERIALIZATION_ERROR]: `Error serializing an account`,
   };

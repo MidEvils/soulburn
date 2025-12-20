@@ -6,4 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './endType';
+export * from './eventType';
 export * from './key';

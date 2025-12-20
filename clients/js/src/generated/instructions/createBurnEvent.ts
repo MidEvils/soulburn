@@ -8,8 +8,6 @@
 
 import {
   combineCodec,
-  getI64Decoder,
-  getI64Encoder,
   getOptionDecoder,
   getOptionEncoder,
   getStructDecoder,
@@ -39,6 +37,12 @@ import {
 } from '@solana/kit';
 import { SOULBURN_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  getEndTypeDecoder,
+  getEndTypeEncoder,
+  type EndType,
+  type EndTypeArgs,
+} from '../types';
 
 export const CREATE_BURN_EVENT_DISCRIMINATOR = 2;
 
@@ -90,16 +94,14 @@ export type CreateBurnEventInstruction<
 export type CreateBurnEventInstructionData = {
   discriminator: number;
   burnsRequired: number;
-  tokensPerEventBurn: bigint;
-  endsAt: Option<bigint>;
-  maxTokens: Option<bigint>;
+  endType: Option<EndType>;
+  tokensPerBurn: Option<bigint>;
 };
 
 export type CreateBurnEventInstructionDataArgs = {
   burnsRequired: number;
-  tokensPerEventBurn: number | bigint;
-  endsAt: OptionOrNullable<number | bigint>;
-  maxTokens: OptionOrNullable<number | bigint>;
+  endType: OptionOrNullable<EndTypeArgs>;
+  tokensPerBurn: OptionOrNullable<number | bigint>;
 };
 
 export function getCreateBurnEventInstructionDataEncoder(): Encoder<CreateBurnEventInstructionDataArgs> {
@@ -107,9 +109,8 @@ export function getCreateBurnEventInstructionDataEncoder(): Encoder<CreateBurnEv
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['burnsRequired', getU8Encoder()],
-      ['tokensPerEventBurn', getU64Encoder()],
-      ['endsAt', getOptionEncoder(getI64Encoder())],
-      ['maxTokens', getOptionEncoder(getU64Encoder())],
+      ['endType', getOptionEncoder(getEndTypeEncoder())],
+      ['tokensPerBurn', getOptionEncoder(getU64Encoder())],
     ]),
     (value) => ({ ...value, discriminator: CREATE_BURN_EVENT_DISCRIMINATOR })
   );
@@ -119,9 +120,8 @@ export function getCreateBurnEventInstructionDataDecoder(): Decoder<CreateBurnEv
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['burnsRequired', getU8Decoder()],
-    ['tokensPerEventBurn', getU64Decoder()],
-    ['endsAt', getOptionDecoder(getI64Decoder())],
-    ['maxTokens', getOptionDecoder(getU64Decoder())],
+    ['endType', getOptionDecoder(getEndTypeDecoder())],
+    ['tokensPerBurn', getOptionDecoder(getU64Decoder())],
   ]);
 }
 
@@ -150,15 +150,14 @@ export type CreateBurnEventInput<
   /** The authority of the burner */
   authority: TransactionSigner<TAccountAuthority>;
   /** The mint of the spl-token (seeds: ['soulburn', 'mint', burn_event]) */
-  mint: Address<TAccountMint>;
+  mint?: Address<TAccountMint>;
   /** The spl-token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   burnsRequired: CreateBurnEventInstructionDataArgs['burnsRequired'];
-  tokensPerEventBurn: CreateBurnEventInstructionDataArgs['tokensPerEventBurn'];
-  endsAt: CreateBurnEventInstructionDataArgs['endsAt'];
-  maxTokens: CreateBurnEventInstructionDataArgs['maxTokens'];
+  endType: CreateBurnEventInstructionDataArgs['endType'];
+  tokensPerBurn: CreateBurnEventInstructionDataArgs['tokensPerBurn'];
 };
 
 export function getCreateBurnEventInstruction<
@@ -256,7 +255,7 @@ export type ParsedCreateBurnEventInstruction<
     /** The authority of the burner */
     authority: TAccountMetas[2];
     /** The mint of the spl-token (seeds: ['soulburn', 'mint', burn_event]) */
-    mint: TAccountMetas[3];
+    mint?: TAccountMetas[3] | undefined;
     /** The spl-token program */
     tokenProgram: TAccountMetas[4];
     /** The system program */
@@ -283,13 +282,19 @@ export function parseCreateBurnEventInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === SOULBURN_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       burnEvent: getNextAccount(),
       burner: getNextAccount(),
       authority: getNextAccount(),
-      mint: getNextAccount(),
+      mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },

@@ -1,8 +1,9 @@
 import test from 'ava';
 import {
+  endType,
   findMintPda,
   getAdminMintInstruction,
-  SOULBURN_ERROR__MAX_TOKENS_MINTED,
+  SOULBURN_ERROR__BURN_EVENT_COMPLETED,
   SOULBURN_PROGRAM_ADDRESS,
 } from '../src';
 import {
@@ -20,6 +21,7 @@ import {
   isSolanaError,
   pipe,
   SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+  some,
 } from '@solana/kit';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
@@ -42,7 +44,7 @@ test('can mint tokens for an event', async (t) => {
     burner,
     2,
     1n,
-    300n
+    some(endType('MaxBurns', { maxBurns: 300 }))
   );
 
   const [mint] = await findMintPda({
@@ -64,7 +66,7 @@ test('can mint tokens for an event', async (t) => {
     mint,
     ata,
     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
-    amount: 300n,
+    amount: 300,
   });
   await pipe(
     await createDefaultTransaction(client, authority),
@@ -92,7 +94,7 @@ test('cannot mint more tokens than the event config', async (t) => {
     burner,
     2,
     1n,
-    300n
+    endType('MaxBurns', { maxBurns: 300 })
   );
 
   const [mint] = await findMintPda({
@@ -114,7 +116,7 @@ test('cannot mint more tokens than the event config', async (t) => {
     mint,
     ata,
     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
-    amount: 301n,
+    amount: 301,
   });
   const transactionMessage = pipe(
     await createDefaultTransaction(client, authority),
@@ -135,7 +137,7 @@ test('cannot mint more tokens than the event config', async (t) => {
       error.cause,
       transactionMessage,
       SOULBURN_PROGRAM_ADDRESS,
-      SOULBURN_ERROR__MAX_TOKENS_MINTED
+      SOULBURN_ERROR__BURN_EVENT_COMPLETED
     )
   );
 });

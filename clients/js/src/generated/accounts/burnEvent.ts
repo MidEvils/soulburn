@@ -17,14 +17,12 @@ import {
   getAddressEncoder,
   getBooleanDecoder,
   getBooleanEncoder,
-  getI64Decoder,
-  getI64Encoder,
   getOptionDecoder,
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
+  getU16Decoder,
+  getU16Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -41,7 +39,19 @@ import {
   type Option,
   type OptionOrNullable,
 } from '@solana/kit';
-import { getKeyDecoder, getKeyEncoder, Key } from '../types';
+import {
+  getEndTypeDecoder,
+  getEndTypeEncoder,
+  getEventTypeDecoder,
+  getEventTypeEncoder,
+  getKeyDecoder,
+  getKeyEncoder,
+  Key,
+  type EndType,
+  type EndTypeArgs,
+  type EventType,
+  type EventTypeArgs,
+} from '../types';
 
 export const BURN_EVENT_KEY = Key.BurnEvent;
 
@@ -52,24 +62,22 @@ export function getBurnEventKeyBytes() {
 export type BurnEvent = {
   key: Key;
   burner: Address;
-  mint: Address;
   active: boolean;
-  endsAt: Option<bigint>;
   burnsRequired: number;
-  tokensPerEventBurn: bigint;
-  maxTokens: Option<bigint>;
-  tokensMinted: bigint;
+  eventType: EventType;
+  endType: Option<EndType>;
+  burnsCompleted: number;
+  completed: boolean;
 };
 
 export type BurnEventArgs = {
   burner: Address;
-  mint: Address;
   active: boolean;
-  endsAt: OptionOrNullable<number | bigint>;
   burnsRequired: number;
-  tokensPerEventBurn: number | bigint;
-  maxTokens: OptionOrNullable<number | bigint>;
-  tokensMinted: number | bigint;
+  eventType: EventTypeArgs;
+  endType: OptionOrNullable<EndTypeArgs>;
+  burnsCompleted: number;
+  completed: boolean;
 };
 
 export function getBurnEventEncoder(): Encoder<BurnEventArgs> {
@@ -77,13 +85,12 @@ export function getBurnEventEncoder(): Encoder<BurnEventArgs> {
     getStructEncoder([
       ['key', getKeyEncoder()],
       ['burner', getAddressEncoder()],
-      ['mint', getAddressEncoder()],
       ['active', getBooleanEncoder()],
-      ['endsAt', getOptionEncoder(getI64Encoder())],
       ['burnsRequired', getU8Encoder()],
-      ['tokensPerEventBurn', getU64Encoder()],
-      ['maxTokens', getOptionEncoder(getU64Encoder())],
-      ['tokensMinted', getU64Encoder()],
+      ['eventType', getEventTypeEncoder()],
+      ['endType', getOptionEncoder(getEndTypeEncoder())],
+      ['burnsCompleted', getU16Encoder()],
+      ['completed', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, key: BURN_EVENT_KEY })
   );
@@ -93,13 +100,12 @@ export function getBurnEventDecoder(): Decoder<BurnEvent> {
   return getStructDecoder([
     ['key', getKeyDecoder()],
     ['burner', getAddressDecoder()],
-    ['mint', getAddressDecoder()],
     ['active', getBooleanDecoder()],
-    ['endsAt', getOptionDecoder(getI64Decoder())],
     ['burnsRequired', getU8Decoder()],
-    ['tokensPerEventBurn', getU64Decoder()],
-    ['maxTokens', getOptionDecoder(getU64Decoder())],
-    ['tokensMinted', getU64Decoder()],
+    ['eventType', getEventTypeDecoder()],
+    ['endType', getOptionDecoder(getEndTypeDecoder())],
+    ['burnsCompleted', getU16Decoder()],
+    ['completed', getBooleanDecoder()],
   ]);
 }
 

@@ -28,9 +28,11 @@ import {
   appendTransactionMessageInstruction,
   KeyPairSigner,
   generateKeyPairSigner,
+  OptionOrNullable,
 } from '@solana/kit';
 import { MPL_CORE_PROGRAM_PROGRAM_ADDRESS } from '../sdks/mpl-core/generated';
 import {
+  EndTypeArgs,
   findBurnerPda,
   findCollectionPda,
   findMintPda,
@@ -137,9 +139,9 @@ export const createBurnEvent = async (
   authority: KeyPairSigner,
   burner: Address,
   burnsRequired: number,
-  tokensPerEventBurn: bigint,
-  maxTokens?: bigint,
-  endsAt?: bigint
+  tokensPerBurn: OptionOrNullable<bigint>,
+  endType: OptionOrNullable<EndTypeArgs>,
+  mintTokens: boolean = true
 ): Promise<Address> => {
   const burnEvent = await generateKeyPairSigner();
 
@@ -151,10 +153,9 @@ export const createBurnEvent = async (
     authority,
     burner,
     burnsRequired,
-    endsAt: endsAt || null,
-    maxTokens: maxTokens || null,
-    mint,
-    tokensPerEventBurn,
+    endType,
+    tokensPerBurn,
+    mint: mintTokens ? mint : undefined,
   });
   await pipe(
     await createDefaultTransaction(client, authority),

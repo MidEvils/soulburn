@@ -22,22 +22,7 @@ pub(crate) fn mint_tokens<'a>(
         return Err(SoulburnError::AccountMismatch.into());
     }
 
-    let mut burn_event_account = BurnEvent::load(burn_event)?;
     let mint_account = SplMint::unpack(&mint.try_borrow_data()?)?;
-
-    match burn_event_account.max_tokens {
-        Some(max_tokens) => {
-            if burn_event_account
-                .tokens_minted
-                .checked_add(amount)
-                .unwrap()
-                > max_tokens
-            {
-                return Err(SoulburnError::MaxTokensMinted.into());
-            }
-        }
-        None => {}
-    }
 
     let decimals = mint_account.decimals;
     let amount_base = amount
@@ -57,8 +42,5 @@ pub(crate) fn mint_tokens<'a>(
         &ix,
         &[mint.clone(), ata.clone(), owner.clone(), burner.clone()],
         &[seeds],
-    )?;
-
-    burn_event_account.tokens_minted += amount;
-    burn_event_account.save(burn_event)
+    )
 }

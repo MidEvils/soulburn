@@ -145,9 +145,9 @@ export type EventBurnInput<
   /** The owner of the asset */
   owner: TransactionSigner<TAccountOwner>;
   /** The mint of the event (seeds: ['soulburn', 'mint', burn_event]) */
-  mint: Address<TAccountMint>;
+  mint?: Address<TAccountMint>;
   /** The ata to receive the reward mint */
-  ata: Address<TAccountAta>;
+  ata?: Address<TAccountAta>;
   /** The mpl-core program */
   coreProgram: Address<TAccountCoreProgram>;
   /** The system program */
@@ -155,7 +155,7 @@ export type EventBurnInput<
   /** The token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   /** The associated token program */
-  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   assets: Array<Address>;
 };
 
@@ -299,9 +299,9 @@ export type ParsedEventBurnInstruction<
     /** The owner of the asset */
     owner: TAccountMetas[4];
     /** The mint of the event (seeds: ['soulburn', 'mint', burn_event]) */
-    mint: TAccountMetas[5];
+    mint?: TAccountMetas[5] | undefined;
     /** The ata to receive the reward mint */
-    ata: TAccountMetas[6];
+    ata?: TAccountMetas[6] | undefined;
     /** The mpl-core program */
     coreProgram: TAccountMetas[7];
     /** The system program */
@@ -309,7 +309,7 @@ export type ParsedEventBurnInstruction<
     /** The token program */
     tokenProgram: TAccountMetas[9];
     /** The associated token program */
-    associatedTokenProgram: TAccountMetas[10];
+    associatedTokenProgram?: TAccountMetas[10] | undefined;
   };
   data: EventBurnInstructionData;
 };
@@ -332,6 +332,12 @@ export function parseEventBurnInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === SOULBURN_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -340,12 +346,12 @@ export function parseEventBurnInstruction<
       collection: getNextAccount(),
       soulboundCollection: getNextAccount(),
       owner: getNextAccount(),
-      mint: getNextAccount(),
-      ata: getNextAccount(),
+      mint: getNextOptionalAccount(),
+      ata: getNextOptionalAccount(),
       coreProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       tokenProgram: getNextAccount(),
-      associatedTokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextOptionalAccount(),
     },
     data: getEventBurnInstructionDataDecoder().decode(instruction.data),
   };

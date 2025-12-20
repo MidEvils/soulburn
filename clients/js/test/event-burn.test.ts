@@ -8,11 +8,13 @@ import {
   SOULBURN_ERROR__EVENT_INACTIVE,
   SOULBURN_ERROR__EXPECTED_MPL_CORE_ASSET,
   SOULBURN_ERROR__INVALID_REMAINING_ACCOUNTS,
-  SOULBURN_ERROR__MAX_TOKENS_MINTED,
+  SOULBURN_ERROR__BURN_EVENT_COMPLETED,
   SOULBURN_PROGRAM_ADDRESS,
+  endType,
 } from '../src';
 import {
   activateBurnEvent,
+  Client,
   createBurner,
   createBurnEvent,
   createDefaultSolanaClient,
@@ -28,6 +30,7 @@ import {
 } from '../sdks/mpl-core/generated';
 import {
   Account,
+  Address,
   appendTransactionMessageInstruction,
   appendTransactionMessageInstructions,
   fetchEncodedAccounts,
@@ -35,6 +38,7 @@ import {
   isSolanaError,
   pipe,
   SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+  TransactionSigner,
 } from '@solana/kit';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
@@ -60,7 +64,7 @@ test('can soulburn for an event', async (t) => {
     burner,
     2,
     1n,
-    300n
+    endType('MaxBurns', { maxBurns: 300 })
   );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
@@ -167,7 +171,7 @@ test('cannot soulburn the same assets twice', async (t) => {
     burner,
     2,
     1n,
-    300n
+    endType('MaxBurns', { maxBurns: 300 })
   );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
@@ -266,7 +270,7 @@ test('cannot soulburn 1 or 3 assets if expects 2', async (t) => {
     burner,
     2,
     1n,
-    300n
+    endType('MaxBurns', { maxBurns: 300 })
   );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
@@ -420,7 +424,14 @@ test('cannot burn if max mints is reached', async (t) => {
   const collection = await createCoreCollection(client, authority);
 
   const burner = await createBurner(client, authority, collection);
-  const burnEvent = await createBurnEvent(client, authority, burner, 1, 1n, 1n);
+  const burnEvent = await createBurnEvent(
+    client,
+    authority,
+    burner,
+    1,
+    1n,
+    endType('MaxBurns', { maxBurns: 1 })
+  );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
 
@@ -521,7 +532,7 @@ test('cannot burn if max mints is reached', async (t) => {
       error.cause,
       transactionMessage,
       SOULBURN_PROGRAM_ADDRESS,
-      SOULBURN_ERROR__MAX_TOKENS_MINTED
+      SOULBURN_ERROR__BURN_EVENT_COMPLETED
     )
   );
 });
@@ -533,7 +544,14 @@ test('cannot burn if max mints is reached even if they are burned', async (t) =>
   const collection = await createCoreCollection(client, authority);
 
   const burner = await createBurner(client, authority, collection);
-  const burnEvent = await createBurnEvent(client, authority, burner, 1, 1n, 1n);
+  const burnEvent = await createBurnEvent(
+    client,
+    authority,
+    burner,
+    1,
+    1n,
+    endType('MaxBurns', { maxBurns: 1 })
+  );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
 
@@ -646,7 +664,7 @@ test('cannot burn if max mints is reached even if they are burned', async (t) =>
       error.cause,
       transactionMessage,
       SOULBURN_PROGRAM_ADDRESS,
-      SOULBURN_ERROR__MAX_TOKENS_MINTED
+      SOULBURN_ERROR__BURN_EVENT_COMPLETED
     )
   );
 });
@@ -658,7 +676,14 @@ test('cannot burn if inactive', async (t) => {
   const collection = await createCoreCollection(client, authority);
 
   const burner = await createBurner(client, authority, collection);
-  const burnEvent = await createBurnEvent(client, authority, burner, 1, 1n, 1n);
+  const burnEvent = await createBurnEvent(
+    client,
+    authority,
+    burner,
+    1,
+    1n,
+    endType('MaxBurns', { maxBurns: 2 })
+  );
 
   const owner = await generateKeyPairSignerWithSol(client);
 
@@ -740,8 +765,7 @@ test('cannot burn if after end time', async (t) => {
     burner,
     1,
     1n,
-    1n,
-    BigInt(Math.ceil(Date.now() / 1000) + 5)
+    endType('Timestamp', { endsAt: BigInt(Math.ceil(Date.now() / 1000) + 5) })
   );
 
   await activateBurnEvent(client, burnEvent, burner, authority);
@@ -834,6 +858,165 @@ test('cannot burn if after end time', async (t) => {
       transactionMessage,
       SOULBURN_PROGRAM_ADDRESS,
       SOULBURN_ERROR__EVENT_ENDED
+    )
+  );
+});
+
+async function eventBurn({
+  client,
+  burner,
+  burnEvent,
+  authority,
+  collection,
+  owner,
+  mint,
+  name = 'Test asset',
+  url = 'https://example.com',
+}: {
+  client: Client;
+  burner: Address;
+  burnEvent: Address;
+  authority: TransactionSigner;
+  collection: Address;
+  owner: TransactionSigner;
+  mint?: Address;
+  name?: string;
+  url?: string;
+}) {
+  const [soulboundCollection] = await findCollectionPda({
+    collection,
+  });
+  const asset = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    name,
+    url
+  );
+
+  const [soulboundAsset] = await findAssetPda({
+    collection,
+    asset,
+  });
+
+  const soulburnIx = getEventBurnInstruction({
+    burner,
+    burnEvent,
+    collection,
+    soulboundCollection,
+    owner,
+    mint,
+    ata: mint
+      ? (
+          await findAssociatedTokenPda({
+            mint,
+            owner: owner.address,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS,
+          })
+        )[0]
+      : undefined,
+    associatedTokenProgram: mint ? ASSOCIATED_TOKEN_PROGRAM_ADDRESS : undefined,
+    coreProgram: MPL_CORE_PROGRAM_PROGRAM_ADDRESS,
+    assets: [asset, soulboundAsset],
+  });
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionMessageInstruction(soulburnIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+}
+
+test('can soulburn for a noop event', async (t) => {
+  t.timeout(30000);
+  const client = createDefaultSolanaClient();
+  const authority = await generateKeyPairSignerWithSol(client);
+  const collection = await createCoreCollection(client, authority);
+
+  const burner = await createBurner(client, authority, collection);
+  const burnEvent = await createBurnEvent(
+    client,
+    authority,
+    burner,
+    1,
+    1n,
+    endType('MaxBurns', { maxBurns: 5 }),
+    false
+  );
+
+  await activateBurnEvent(client, burnEvent, burner, authority);
+
+  const owner = await generateKeyPairSignerWithSol(client);
+
+  const assets = [
+    'Test asset 1',
+    'Test asset 2',
+    'Test asset 3',
+    'Test asset 4',
+    'Test asset 5',
+  ];
+
+  await Promise.all(
+    assets.map((asset) =>
+      eventBurn({
+        client,
+        burnEvent,
+        burner,
+        authority,
+        collection,
+        owner,
+        name: asset,
+      })
+    )
+  );
+
+  const asset = await createCoreAsset(
+    client,
+    authority,
+    collection,
+    owner.address,
+    'Test asset 6',
+    'http://example.com'
+  );
+
+  const [soulboundAsset] = await findAssetPda({
+    collection,
+    asset,
+  });
+
+  const [soulboundCollection] = await findCollectionPda({
+    collection,
+  });
+
+  const soulburnIx = getEventBurnInstruction({
+    burner,
+    burnEvent,
+    collection,
+    soulboundCollection,
+    owner,
+    coreProgram: MPL_CORE_PROGRAM_PROGRAM_ADDRESS,
+    assets: [asset, soulboundAsset],
+  });
+  const transactionMessage = pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionMessageInstruction(soulburnIx, tx)
+  );
+
+  const promise = signAndSendTransaction(client, transactionMessage);
+  const error = await t.throwsAsync(promise);
+
+  t.true(
+    isSolanaError(
+      error,
+      SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+    )
+  );
+  t.true(
+    isProgramError(
+      error.cause,
+      transactionMessage,
+      SOULBURN_PROGRAM_ADDRESS,
+      SOULBURN_ERROR__BURN_EVENT_COMPLETED
     )
   );
 });

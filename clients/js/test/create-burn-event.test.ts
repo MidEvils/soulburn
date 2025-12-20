@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   BurnEvent,
+  endType,
   fetchBurnEvent,
   findMintPda,
   getCreateBurnEventInstruction,
@@ -19,8 +20,8 @@ import {
   Account,
   appendTransactionMessageInstruction,
   generateKeyPairSigner,
-  none,
   pipe,
+  some,
 } from '@solana/kit';
 
 test('it creates a new burn event account', async (t) => {
@@ -45,10 +46,9 @@ test('it creates a new burn event account', async (t) => {
     authority,
     burner,
     burnsRequired: 2,
-    endsAt: null,
-    maxTokens: 300,
+    endType: some(endType('MaxBurns', { maxBurns: 300 })),
     mint,
-    tokensPerEventBurn: 1n,
+    tokensPerBurn: some(1n),
   });
   await pipe(
     await createDefaultTransaction(client, authority),
@@ -63,7 +63,7 @@ test('it creates a new burn event account', async (t) => {
       key: Key.BurnEvent,
       burner,
       active: false,
-      endsAt: none(),
+      endType: some(endType('MaxBurns', { maxBurns: 300 })),
       burnsRequired: 2,
     },
   });

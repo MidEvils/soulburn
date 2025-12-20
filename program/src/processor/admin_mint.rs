@@ -1,17 +1,21 @@
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg};
 
 use crate::{
     assertions::{assert_pda, assert_same_pubkeys, assert_signer},
+    error::SoulburnError,
     instruction::accounts::AdminMintAccounts,
-    state::{burn_event::BurnEvent, burner::Burner},
+    state::{
+        burn_event::{BurnEvent, EndType},
+        burner::Burner,
+    },
     utils::{create_ata::create_ata, mint_tokens::mint_tokens},
 };
 
-pub(crate) fn admin_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResult {
+pub(crate) fn admin_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u16) -> ProgramResult {
     let ctx = AdminMintAccounts::context(accounts)?;
 
     let burner = Burner::load(ctx.accounts.burner)?;
-    let burn_event = BurnEvent::load(ctx.accounts.burn_event)?;
+    let mut burn_event = BurnEvent::load(ctx.accounts.burn_event)?;
 
     let bump = assert_pda(
         "burner",
@@ -19,6 +23,19 @@ pub(crate) fn admin_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> Pr
         &crate::ID,
         &Burner::seeds(&burner.collection),
     )?;
+
+    match burn_event.end_type {
+        Some(end_type) => match end_type {
+            EndType::Timestamp { ends_at: _ } => {}
+            EndType::MaxBurns { max_burns } => {
+                if burn_event.burns_completed + amount > max_burns {
+                    msg!("Burn event completed");
+                    return Err(SoulburnError::BurnEventCompleted.into());
+                }
+            }
+        },
+        None => (),
+    }
 
     assert_same_pubkeys("burner", ctx.accounts.burner, &burn_event.burner)?;
     assert_same_pubkeys("authority", ctx.accounts.authority, &burner.authority)?;
@@ -46,6 +63,9 @@ pub(crate) fn admin_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> Pr
         ctx.accounts.burner,
         ctx.accounts.token_program,
         &seeds,
-        amount,
-    )
+        u64::from(amount),
+    )?;
+
+    burn_event.burns_completed += amount;
+    burn_event.save(ctx.accounts.burn_event)
 }

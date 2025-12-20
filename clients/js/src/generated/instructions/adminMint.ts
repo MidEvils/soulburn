@@ -10,8 +10,8 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
+  getU16Decoder,
+  getU16Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -91,16 +91,16 @@ export type AdminMintInstruction<
 
 export type AdminMintInstructionData = {
   discriminator: number;
-  amount: bigint;
+  amount: number;
 };
 
-export type AdminMintInstructionDataArgs = { amount: number | bigint };
+export type AdminMintInstructionDataArgs = { amount: number };
 
 export function getAdminMintInstructionDataEncoder(): FixedSizeEncoder<AdminMintInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['amount', getU64Encoder()],
+      ['amount', getU16Encoder()],
     ]),
     (value) => ({ ...value, discriminator: ADMIN_MINT_DISCRIMINATOR })
   );
@@ -109,7 +109,7 @@ export function getAdminMintInstructionDataEncoder(): FixedSizeEncoder<AdminMint
 export function getAdminMintInstructionDataDecoder(): FixedSizeDecoder<AdminMintInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['amount', getU64Decoder()],
+    ['amount', getU16Decoder()],
   ]);
 }
 

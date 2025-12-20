@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   BurnEvent,
+  endType,
   fetchBurnEvent,
   getToggleEventActiveInstruction,
 } from '../src';
@@ -36,7 +37,7 @@ test('it creates a new burn event account', async (t) => {
     burner,
     2,
     1n,
-    300n
+    endType('MaxBurns', { maxBurns: 300 })
   );
 
   // When we create a new burner account.

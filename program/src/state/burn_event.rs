@@ -7,21 +7,32 @@ use solana_program::{
 
 use crate::{error::SoulburnError, state::Key};
 
+#[derive(Clone, Copy, BorshSerialize, BorshDeserialize, Debug)]
+pub enum EventType {
+    Token { tokens_per_burn: u64, mint: Pubkey },
+    Noop,
+}
+
+#[derive(Clone, Copy, BorshSerialize, BorshDeserialize, Debug)]
+pub enum EndType {
+    MaxBurns { max_burns: u16 },
+    Timestamp { ends_at: i64 },
+}
+
 #[derive(Clone, BorshSerialize, BorshDeserialize, Debug, ShankAccount)]
 pub struct BurnEvent {
     pub key: Key,
     pub burner: Pubkey,
-    pub mint: Pubkey,
     pub active: bool,
-    pub ends_at: Option<i64>,
     pub burns_required: u8,
-    pub tokens_per_event_burn: u64,
-    pub max_tokens: Option<u64>,
-    pub tokens_minted: u64,
+    pub event_type: EventType,
+    pub end_type: Option<EndType>,
+    pub burns_completed: u16,
+    pub completed: bool,
 }
 
 impl BurnEvent {
-    pub const LEN: usize = 1 + 32 + 32 + 1 + (1 + 8) + 1 + 8 + (1 + 8) + 8;
+    pub const LEN: usize = 1 + 32 + 1 + 1 + (1 + 8 + 32) + (1 + (1 + 8)) + 2 + 1;
 
     pub fn load(account: &AccountInfo) -> Result<Self, ProgramError> {
         let mut bytes: &[u8] = &(*account.data).borrow();
