@@ -9,6 +9,7 @@
 export * from './adminMint';
 export * from './create';
 export * from './createBurnEvent';
+export * from './deleteBurnEvent';
 export * from './eventBurn';
 export * from './soulburnAsset';
 export * from './toggleEventActive';

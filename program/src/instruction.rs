@@ -42,6 +42,12 @@ pub enum SoulburnInstruction {
     #[account(2, signer, name="authority", desc = "The authority of the burner")]
     ToggleEventActive { active: bool },
 
+    /// Deletes burn event
+    #[account(0, writable, name="burn_event", desc = "The account of the burn-event")]
+    #[account(1, name="burner", desc = "The PDA of the burner account (seeds: ['soulburn', 'burner', collection])")]
+    #[account(2, signer, writable, name="authority", desc = "The authority of the burner")]
+    DeleteBurnEvent,
+
     /// Burn asset(s) as part of a burn event.
     /// Additional accounts to be provided in pairs of [Asset, SoulboundAsset]
     #[account(0, name="burner", desc = "The PDA of the burner account (seeds: ['soulburn', 'burner', collection])")]

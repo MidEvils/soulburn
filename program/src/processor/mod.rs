@@ -7,12 +7,14 @@ use crate::instruction::SoulburnInstruction;
 mod admin_mint;
 mod create;
 mod create_burn_event;
+mod delete_burn_event;
 mod event_burn;
 mod soulburn_asset;
 mod toggle_event_active;
 use admin_mint::*;
 use create::*;
 use create_burn_event::*;
+use delete_burn_event::*;
 use event_burn::*;
 use soulburn_asset::*;
 use toggle_event_active::*;
@@ -51,6 +53,10 @@ pub fn process_instruction<'a>(
         SoulburnInstruction::ToggleEventActive { active } => {
             msg!("Instruction: ToggleEventActive");
             toggle_event_active(accounts, active)
+        }
+        SoulburnInstruction::DeleteBurnEvent => {
+            msg!("Instruction: DeleteBurnEvent");
+            delete_burn_event(accounts)
         }
     }
 }

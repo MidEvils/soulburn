@@ -16,6 +16,7 @@ import {
   type ParsedAdminMintInstruction,
   type ParsedCreateBurnEventInstruction,
   type ParsedCreateInstruction,
+  type ParsedDeleteBurnEventInstruction,
   type ParsedEventBurnInstruction,
   type ParsedSoulburnAssetInstruction,
   type ParsedToggleEventActiveInstruction,
@@ -53,6 +54,7 @@ export enum SoulburnInstruction {
   SoulburnAsset,
   CreateBurnEvent,
   ToggleEventActive,
+  DeleteBurnEvent,
   EventBurn,
   AdminMint,
 }
@@ -74,9 +76,12 @@ export function identifySoulburnInstruction(
     return SoulburnInstruction.ToggleEventActive;
   }
   if (containsBytes(data, getU8Encoder().encode(4), 0)) {
-    return SoulburnInstruction.EventBurn;
+    return SoulburnInstruction.DeleteBurnEvent;
   }
   if (containsBytes(data, getU8Encoder().encode(5), 0)) {
+    return SoulburnInstruction.EventBurn;
+  }
+  if (containsBytes(data, getU8Encoder().encode(6), 0)) {
     return SoulburnInstruction.AdminMint;
   }
   throw new Error(
@@ -99,6 +104,9 @@ export type ParsedSoulburnInstruction<
   | ({
       instructionType: SoulburnInstruction.ToggleEventActive;
     } & ParsedToggleEventActiveInstruction<TProgram>)
+  | ({
+      instructionType: SoulburnInstruction.DeleteBurnEvent;
+    } & ParsedDeleteBurnEventInstruction<TProgram>)
   | ({
       instructionType: SoulburnInstruction.EventBurn;
     } & ParsedEventBurnInstruction<TProgram>)

@@ -33,7 +33,7 @@ import {
 import { SOULBURN_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const ADMIN_MINT_DISCRIMINATOR = 5;
+export const ADMIN_MINT_DISCRIMINATOR = 6;
 
 export function getAdminMintDiscriminatorBytes() {
   return getU8Encoder().encode(ADMIN_MINT_DISCRIMINATOR);

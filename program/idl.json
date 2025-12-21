@@ -269,6 +269,40 @@
       }
     },
     {
+      "name": "DeleteBurnEvent",
+      "accounts": [
+        {
+          "name": "burnEvent",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The account of the burn-event"
+          ]
+        },
+        {
+          "name": "burner",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The PDA of the burner account (seeds: ['soulburn', 'burner', collection])"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The authority of the burner"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    },
+    {
       "name": "EventBurn",
       "accounts": [
         {
@@ -366,7 +400,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 4
+        "value": 5
       }
     },
     {
@@ -453,7 +487,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 5
+        "value": 6
       }
     }
   ],

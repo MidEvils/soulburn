@@ -32,7 +32,7 @@ import {
 import { SOULBURN_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const EVENT_BURN_DISCRIMINATOR = 4;
+export const EVENT_BURN_DISCRIMINATOR = 5;
 
 export function getEventBurnDiscriminatorBytes() {
   return getU8Encoder().encode(EVENT_BURN_DISCRIMINATOR);
